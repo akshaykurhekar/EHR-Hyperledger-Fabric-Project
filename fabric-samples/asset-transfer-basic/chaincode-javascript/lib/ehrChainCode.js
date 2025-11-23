@@ -8,6 +8,23 @@ class ehrChainCode extends Contract {
   recordIdGenerator(ctx){ return this.genId(ctx,'R'); }
   claimIdGenerator(ctx){ return this.genId(ctx,'CLAIM'); }
 
+  // helper to get deterministic ISO timestamp from transaction context
+  getTxTimestampISO(ctx){
+    const ts = ctx.stub.getTxTimestamp();
+    // ts.seconds may be a Long object or a number depending on environment
+    let seconds = 0;
+    if (ts && ts.seconds !== undefined) {
+      if (typeof ts.seconds === 'object' && ts.seconds.low !== undefined) {
+        seconds = ts.seconds.low;
+      } else {
+        seconds = ts.seconds;
+      }
+    }
+    const nanos = ts && ts.nanos ? ts.nanos : 0;
+    const millis = (seconds * 1000) + Math.floor(nanos / 1e6);
+    return new Date(millis).toISOString();
+  }
+
   getCallerAttributes(ctx){
     const role = ctx.clientIdentity.getAttributeValue('role');
     const uuid = ctx.clientIdentity.getAttributeValue('uuid');
@@ -24,7 +41,8 @@ class ehrChainCode extends Contract {
     const key = `hospital-${hospitalId}`;
     const ex = await ctx.stub.getState(key);
     if(ex && ex.length) throw new Error(`Hospital ${hospitalId} exists`);
-    const hospital = { hospitalId, name, address, adminId: uuid, createdAt: new Date().toISOString() };
+    const createdAt = this.getTxTimestampISO(ctx);
+    const hospital = { hospitalId, name, address, adminId: uuid, createdAt };
     await ctx.stub.putState(key, Buffer.from(stringify(hospital)));
     return stringify(hospital);
   }
@@ -37,7 +55,8 @@ class ehrChainCode extends Contract {
     const key = `insurance-${insuranceId}`;
     const ex = await ctx.stub.getState(key);
     if(ex && ex.length) throw new Error(`Insurance ${insuranceId} exists`);
-    const ins = { insuranceId, name, address, adminId: uuid, createdAt: new Date().toISOString() };
+    const createdAt = this.getTxTimestampISO(ctx);
+    const ins = { insuranceId, name, address, adminId: uuid, createdAt };
     await ctx.stub.putState(key, Buffer.from(stringify(ins)));
     return stringify(ins);
   }
@@ -49,7 +68,8 @@ class ehrChainCode extends Contract {
     const key = `doctor-${doctorId}`;
     const ex = await ctx.stub.getState(key);
     if(ex && ex.length) throw new Error(`Doctor ${doctorId} exists`);
-    const doc = { doctorId, hospitalId, name, city, onboardedBy: uuid, createdAt: new Date().toISOString() };
+    const createdAt = this.getTxTimestampISO(ctx);
+    const doc = { doctorId, hospitalId, name, city, onboardedBy: uuid, createdAt };
     await ctx.stub.putState(key, Buffer.from(stringify(doc)));
     const hospDoctorsKey = `hospitalDoctors-${hospitalId}`;
     let list = []; const listBytes = await ctx.stub.getState(hospDoctorsKey);
@@ -66,7 +86,8 @@ class ehrChainCode extends Contract {
     const key = `agent-${agentId}`;
     const ex = await ctx.stub.getState(key);
     if(ex && ex.length) throw new Error(`Agent ${agentId} exists`);
-    const agent = { agentId, insuranceId, name, city, onboardedBy: uuid, createdAt: new Date().toISOString() };
+    const createdAt = this.getTxTimestampISO(ctx);
+    const agent = { agentId, insuranceId, name, city, onboardedBy: uuid, createdAt };
     await ctx.stub.putState(key, Buffer.from(stringify(agent)));
     const agentsKey = `insuranceAgents-${insuranceId}`;
     let list = []; const listBytes = await ctx.stub.getState(agentsKey);
@@ -82,7 +103,8 @@ class ehrChainCode extends Contract {
     const key = `patient-${patientId}`;
     const ex = await ctx.stub.getState(key);
     if(ex && ex.length) throw new Error(`Patient ${patientId} exists`);
-    const patient = { patientId, name, dob, city, authorizedDoctors: [], createdAt: new Date().toISOString() };
+    const createdAt = this.getTxTimestampISO(ctx);
+    const patient = { patientId, name, dob, city, authorizedDoctors: [], createdAt };
     await ctx.stub.putState(key, Buffer.from(JSON.stringify(patient)));
     return stringify(patient);
   }
@@ -201,9 +223,13 @@ class ehrChainCode extends Contract {
     const claim = JSON.parse(claimBytes.toString());
     if(claim.doctorId !== doctorId) throw new Error('Doctor not assigned');
     if(claim.status !== 'PENDING_DOCTOR_VERIFICATION') throw new Error('Claim not in doctor stage');
-    claim.doctorVerified = !!verified; claim.doctorNotes = notes||''; claim.status = verified ? 'PENDING_INSURANCE_REVIEW' : 'DOCTOR_REJECTED';
-    claim.updatedAt = new Date().toISOString(); claim.history = claim.history || [];
-    claim.history.push({ at: claim.updatedAt, by: doctorId, action: verified ? 'DOCTOR_APPROVED' : 'DOCTOR_REJECTED', notes: notes||'' });
+    const updatedAt = this.getTxTimestampISO(ctx);
+    claim.doctorVerified = !!verified;
+    claim.doctorNotes = notes||'';
+    claim.status = verified ? 'PENDING_INSURANCE_REVIEW' : 'DOCTOR_REJECTED';
+    claim.updatedAt = updatedAt;
+    claim.history = claim.history || [];
+    claim.history.push({ at: updatedAt, by: doctorId, action: verified ? 'DOCTOR_APPROVED' : 'DOCTOR_REJECTED', notes: notes||'' });
     await ctx.stub.putState(claimKey, Buffer.from(JSON.stringify(claim))); return JSON.stringify({ message: 'Doctor verification recorded', claim });
   }
 
@@ -215,7 +241,8 @@ class ehrChainCode extends Contract {
     if(!claimBytes || !claimBytes.length) throw new Error('Claim not found');
     const claim = JSON.parse(claimBytes.toString());
     if(claim.status !== 'PENDING_INSURANCE_REVIEW') throw new Error('Claim not ready');
-    claim.agentId = agentId; claim.agentNotes = notes||''; claim.status = 'PENDING_INSURANCE_APPROVAL'; claim.updatedAt = new Date().toISOString();
+    const updatedAt = this.getTxTimestampISO(ctx);
+    claim.agentId = agentId; claim.agentNotes = notes||''; claim.status = 'PENDING_INSURANCE_APPROVAL'; claim.updatedAt = updatedAt;
     claim.history.push({ at: claim.updatedAt, by: agentId, action: 'AGENT_REVIEWED', notes: notes||'' });
     await ctx.stub.putState(claimKey, Buffer.from(JSON.stringify(claim))); return JSON.stringify({ message: 'Agent review recorded', claim });
   }
@@ -228,8 +255,9 @@ class ehrChainCode extends Contract {
     if(!claimBytes || !claimBytes.length) throw new Error('Claim not found');
     const claim = JSON.parse(claimBytes.toString());
     if(claim.status !== 'PENDING_INSURANCE_APPROVAL') throw new Error('Claim not in insurance stage');
+    const updatedAt = this.getTxTimestampISO(ctx);
     claim.approvedAmount = approvedAmount; claim.insuranceAgentId = insuranceAgentId; claim.insuranceNotes = notes||''; claim.status = 'INSURANCE_APPROVED';
-    claim.updatedAt = new Date().toISOString(); claim.history.push({ at: claim.updatedAt, by: insuranceAgentId, action: 'INSURANCE_APPROVED', notes: notes||'' });
+    claim.updatedAt = updatedAt; claim.history.push({ at: claim.updatedAt, by: insuranceAgentId, action: 'INSURANCE_APPROVED', notes: notes||'' });
     await ctx.stub.putState(claimKey, Buffer.from(JSON.stringify(claim))); return JSON.stringify({ message: 'Claim approved', claim });
   }
 
@@ -241,8 +269,9 @@ class ehrChainCode extends Contract {
     if(!claimBytes || !claimBytes.length) throw new Error('Claim not found');
     const claim = JSON.parse(claimBytes.toString());
     if(claim.status !== 'PENDING_INSURANCE_APPROVAL') throw new Error('Claim not in insurance stage');
+    const updatedAt = this.getTxTimestampISO(ctx);
     claim.rejectionReason = reason||''; claim.insuranceAgentId = insuranceAgentId; claim.status = 'INSURANCE_REJECTED';
-    claim.updatedAt = new Date().toISOString(); claim.history.push({ at: claim.updatedAt, by: insuranceAgentId, action: 'INSURANCE_REJECTED', notes: reason||'' });
+    claim.updatedAt = updatedAt; claim.history.push({ at: claim.updatedAt, by: insuranceAgentId, action: 'INSURANCE_REJECTED', notes: reason||'' });
     await ctx.stub.putState(claimKey, Buffer.from(JSON.stringify(claim))); return JSON.stringify({ message: 'Claim rejected', claim });
   }
 
@@ -262,8 +291,7 @@ class ehrChainCode extends Contract {
     const { status } = JSON.parse(args); const iter = await ctx.stub.getStateByRange('claim-','claim-~'); const results = [];
     for await(const r of iter){ try{ const v = JSON.parse(r.value.value.toString('utf8')); if(v.status === status) results.push(v); }catch(e){} } return stringify(results);
   }
-
-  async getAllHospitals(ctx,args){
+async getAllHospitals(ctx,args){
     const iter = await ctx.stub.getStateByRange('hospital-','hospital-~');
     const results = [];
     for await(const r of iter){ try{ results.push(JSON.parse(r.value.value.toString('utf8'))); }catch(e){} }
