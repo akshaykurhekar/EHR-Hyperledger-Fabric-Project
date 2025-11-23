@@ -38,6 +38,11 @@ async function registerAndEnroll(org, adminId, enrollmentID, attrs) {
     enrollmentSecret: secret,
     attr_reqs: attrs.map(a => ({ name: a.name, optional: false }))
   });
+  
+  // Verify attributes are in the enrollment certificate
+  if (!enrollment.certificate) {
+    throw new Error('Enrollment failed: no certificate returned');
+  }
 
   const x509Identity = {
     credentials: {

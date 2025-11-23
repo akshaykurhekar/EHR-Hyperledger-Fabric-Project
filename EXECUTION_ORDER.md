@@ -105,7 +105,7 @@ $ node cert-script/onboardInsuranceCompany.js
 
 ---
 
-### Step 8: Onboard Insurance Agent
+### Step 8: Onboard Insurance Agent 
 ```bash
 $ node cert-script/onboardInsuranceAgent.js
 ```
