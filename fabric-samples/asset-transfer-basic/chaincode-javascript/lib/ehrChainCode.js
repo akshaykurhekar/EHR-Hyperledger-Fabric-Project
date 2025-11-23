@@ -292,6 +292,163 @@ class ehrChainCode extends Contract {
     return stringify(patients);
   }
 
+  async getDoctorById(ctx,args){
+    const { doctorId } = JSON.parse(args);
+    const key = `doctor-${doctorId}`;
+    const bytes = await ctx.stub.getState(key);
+    if(!bytes || !bytes.length) throw new Error(`Doctor ${doctorId} not found`);
+    return bytes.toString();
+  }
+
+  async getAgentById(ctx,args){
+    const { agentId } = JSON.parse(args);
+    const key = `agent-${agentId}`;
+    const bytes = await ctx.stub.getState(key);
+    if(!bytes || !bytes.length) throw new Error(`Agent ${agentId} not found`);
+    return bytes.toString();
+  }
+
+  async getAllPatients(ctx,args){
+    const iter = await ctx.stub.getStateByRange('patient-','patient-~');
+    const results = [];
+    for await(const r of iter){ try{ results.push(JSON.parse(r.value.value.toString('utf8'))); }catch(e){} }
+    return stringify(results);
+  }
+
+  async getAllAgents(ctx,args){
+    const iter = await ctx.stub.getStateByRange('agent-','agent-~');
+    const results = [];
+    for await(const r of iter){ try{ results.push(JSON.parse(r.value.value.toString('utf8'))); }catch(e){} }
+    return stringify(results);
+  }
+
+  async assignDoctorToHospital(ctx,args){
+    const { doctorId, hospitalId } = JSON.parse(args);
+    const { role, uuid } = this.getCallerAttributes(ctx);
+    if(role !== 'hospital') throw new Error('Only hospital admin can assign doctors');
+    const docKey = `doctor-${doctorId}`;
+    const docBytes = await ctx.stub.getState(docKey);
+    if(!docBytes || !docBytes.length) throw new Error(`Doctor ${doctorId} not found`);
+    const doctor = JSON.parse(docBytes.toString());
+    const oldHospitalId = doctor.hospitalId;
+    doctor.hospitalId = hospitalId;
+    doctor.updatedAt = new Date().toISOString();
+    await ctx.stub.putState(docKey, Buffer.from(stringify(doctor)));
+    
+    // Update hospital doctors list
+    if(oldHospitalId && oldHospitalId !== hospitalId){
+      const oldHospDoctorsKey = `hospitalDoctors-${oldHospitalId}`;
+      const oldListBytes = await ctx.stub.getState(oldHospDoctorsKey);
+      if(oldListBytes && oldListBytes.length){
+        let oldList = JSON.parse(oldListBytes.toString());
+        const idx = oldList.indexOf(doctorId);
+        if(idx !== -1) oldList.splice(idx,1);
+        await ctx.stub.putState(oldHospDoctorsKey, Buffer.from(JSON.stringify(oldList)));
+      }
+    }
+    const hospDoctorsKey = `hospitalDoctors-${hospitalId}`;
+    let list = []; const listBytes = await ctx.stub.getState(hospDoctorsKey);
+    if(listBytes && listBytes.length) list = JSON.parse(listBytes.toString());
+    if(!list.includes(doctorId)) list.push(doctorId);
+    await ctx.stub.putState(hospDoctorsKey, Buffer.from(JSON.stringify(list)));
+    return stringify(doctor);
+  }
+
+  async assignAgentToInsurance(ctx,args){
+    const { agentId, insuranceId } = JSON.parse(args);
+    const { role, uuid } = this.getCallerAttributes(ctx);
+    if(role !== 'insuranceAdmin') throw new Error('Only insurance admin can assign agents');
+    const agentKey = `agent-${agentId}`;
+    const agentBytes = await ctx.stub.getState(agentKey);
+    if(!agentBytes || !agentBytes.length) throw new Error(`Agent ${agentId} not found`);
+    const agent = JSON.parse(agentBytes.toString());
+    const oldInsuranceId = agent.insuranceId;
+    agent.insuranceId = insuranceId;
+    agent.updatedAt = new Date().toISOString();
+    await ctx.stub.putState(agentKey, Buffer.from(stringify(agent)));
+    
+    // Update insurance agents list
+    if(oldInsuranceId && oldInsuranceId !== insuranceId){
+      const oldAgentsKey = `insuranceAgents-${oldInsuranceId}`;
+      const oldListBytes = await ctx.stub.getState(oldAgentsKey);
+      if(oldListBytes && oldListBytes.length){
+        let oldList = JSON.parse(oldListBytes.toString());
+        const idx = oldList.indexOf(agentId);
+        if(idx !== -1) oldList.splice(idx,1);
+        await ctx.stub.putState(oldAgentsKey, Buffer.from(JSON.stringify(oldList)));
+      }
+    }
+    const agentsKey = `insuranceAgents-${insuranceId}`;
+    let list = []; const listBytes = await ctx.stub.getState(agentsKey);
+    if(listBytes && listBytes.length) list = JSON.parse(listBytes.toString());
+    if(!list.includes(agentId)) list.push(agentId);
+    await ctx.stub.putState(agentsKey, Buffer.from(JSON.stringify(list)));
+    return stringify(agent);
+  }
+
+  async updateClaimDocuments(ctx,args){
+    const { claimId, documents } = JSON.parse(args);
+    const { role, uuid } = this.getCallerAttributes(ctx);
+    if(role !== 'patient') throw new Error('Only patient can update claim documents');
+    const claimKey = `claim-${claimId}`;
+    const claimBytes = await ctx.stub.getState(claimKey);
+    if(!claimBytes || !claimBytes.length) throw new Error('Claim not found');
+    const claim = JSON.parse(claimBytes.toString());
+    if(claim.patientId !== uuid) throw new Error('Caller not owner');
+    claim.documents = documents || [];
+    claim.updatedAt = new Date().toISOString();
+    claim.history = claim.history || [];
+    claim.history.push({ at: claim.updatedAt, by: uuid, action: 'DOCUMENTS_UPDATED' });
+    await ctx.stub.putState(claimKey, Buffer.from(JSON.stringify(claim)));
+    return stringify(claim);
+  }
+
+  async getClaimsByDoctor(ctx,args){
+    const { doctorId } = JSON.parse(args);
+    const iter = await ctx.stub.getStateByRange('claim-','claim-~');
+    const results = [];
+    for await(const r of iter){
+      try{
+        const v = JSON.parse(r.value.value.toString('utf8'));
+        if(v.doctorId === doctorId) results.push(v);
+      }catch(e){}
+    }
+    return stringify(results);
+  }
+
+  async getClaimsByHospital(ctx,args){
+    const { hospitalId } = JSON.parse(args);
+    const iter = await ctx.stub.getStateByRange('claim-','claim-~');
+    const results = [];
+    for await(const r of iter){
+      try{
+        const v = JSON.parse(r.value.value.toString('utf8'));
+        if(v.hospitalId === hospitalId) results.push(v);
+      }catch(e){}
+    }
+    return stringify(results);
+  }
+
+  async deleteUser(ctx,args){
+    const { userId } = JSON.parse(args);
+    const { role } = this.getCallerAttributes(ctx);
+    if(role !== 'hospital') throw new Error('Only hospital admin can delete users');
+    
+    // Try to delete from different user types
+    const keys = [`patient-${userId}`, `doctor-${userId}`, `agent-${userId}`];
+    let deleted = false;
+    for(const key of keys){
+      const bytes = await ctx.stub.getState(key);
+      if(bytes && bytes.length){
+        await ctx.stub.deleteState(key);
+        deleted = true;
+        break;
+      }
+    }
+    if(!deleted) throw new Error(`User ${userId} not found`);
+    return stringify({ message: `User ${userId} deleted successfully` });
+  }
+
   async fetchLedger(ctx){
     const { role } = this.getCallerAttributes(ctx);
     if(role !== 'hospital') throw new Error('Only hospital role can fetch full ledger');

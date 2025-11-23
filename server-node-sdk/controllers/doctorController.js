@@ -29,3 +29,21 @@ exports.listPatients = async (req,res,next) => {
     res.status(200).send(responses.ok(result));
   } catch(err){ next(err); }
 };
+
+exports.getRecordsByPatient = async (req,res,next) => {
+  try{
+    const userId = req.user.id;
+    const patientId = req.params.patientId;
+    const result = await query.getQuery('getAllRecordsByPatientId', { patientId }, userId);
+    res.status(200).send(responses.ok(result));
+  } catch(err){ next(err); }
+};
+
+exports.getProfile = async (req,res,next) => {
+  try{
+    const userId = req.user.id;
+    const doctorId = req.params.doctorId;
+    const result = await query.getQuery('getDoctorById', { doctorId }, userId);
+    res.status(200).send(responses.ok(result));
+  } catch(err){ next(err); }
+};

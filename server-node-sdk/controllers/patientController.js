@@ -58,3 +58,34 @@ exports.getRecords = async (req,res,next) => {
     res.status(200).send(responses.ok(result));
   } catch(err){ next(err); }
 };
+
+exports.getProfile = async (req,res,next) => {
+  try{
+    const userId = req.user.id;
+    const patientId = req.params.patientId;
+    const result = await query.getQuery('getPatientById', { patientId }, userId);
+    res.status(200).send(responses.ok(result));
+  } catch(err){ next(err); }
+};
+
+exports.updateClaimDocuments = async (req,res,next) => {
+  try{
+    const userId = req.user.id;
+    const { claimId, documents } = req.body;
+    if(!claimId || !documents) throw new Error('Missing claimId or documents');
+    
+    // Get current claim
+    const claimResult = await query.getQuery('getClaimById', { claimId }, userId);
+    const claim = JSON.parse(claimResult);
+    
+    // Update documents
+    claim.documents = documents;
+    claim.updatedAt = new Date().toISOString();
+    
+    // Update claim on ledger (this requires a new chaincode function or we use getByKey and putState)
+    // For now, we'll need to add an updateClaimDocuments function to chaincode
+    const payload = { claimId, documents };
+    const result = await invoke.invokeTransaction('updateClaimDocuments', payload, userId);
+    res.status(200).send(responses.ok(result));
+  } catch(err){ next(err); }
+};

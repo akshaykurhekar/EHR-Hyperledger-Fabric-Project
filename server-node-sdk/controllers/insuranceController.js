@@ -40,3 +40,36 @@ exports.getClaim = async (req,res,next) => {
     res.status(200).send(responses.ok(result));
   } catch(err){ next(err); }
 };
+
+exports.getClaimRecords = async (req,res,next) => {
+  try{
+    const userId = req.user.id;
+    const claimId = req.params.claimId;
+    
+    // Get claim first
+    const claimResult = await query.getQuery('getClaimById', { claimId }, userId);
+    const claim = JSON.parse(claimResult);
+    
+    // Get records for the medical record IDs in the claim
+    const recordIds = claim.medicalRecordIds || [];
+    const records = [];
+    for(const recordId of recordIds){
+      try{
+        const recordResult = await query.getQuery('getRecordById', { patientId: claim.patientId, recordId }, userId);
+        records.push(JSON.parse(recordResult));
+      } catch(e){
+        // Skip if record not found
+      }
+    }
+    res.status(200).send(responses.ok(records));
+  } catch(err){ next(err); }
+};
+
+exports.getAgentProfile = async (req,res,next) => {
+  try{
+    const userId = req.user.id;
+    const agentId = req.params.agentId;
+    const result = await query.getQuery('getAgentById', { agentId }, userId);
+    res.status(200).send(responses.ok(result));
+  } catch(err){ next(err); }
+};
