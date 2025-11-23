@@ -26,7 +26,7 @@ async function main() {
         );
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
-        // Create a new CA client
+        // Create CA client
         const caInfo = ccp.certificateAuthorities['ca.org1.example.com'];
         const caTLSCACerts = caInfo.tlsCACerts.pem;
         const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
@@ -38,21 +38,20 @@ async function main() {
 
         const doctorId = 'Doctor-Rama05';
 
-        // Check if doctor identity already exists
+        // Check if doctor already exists
         let userIdentity = await wallet.get(doctorId);
         if (!userIdentity) {
-            // Get hospitalAdmin identity
+            // Hospital admin must exist
             const adminIdentity = await wallet.get('hospitalAdmin');
             if (!adminIdentity) {
-                console.error('HospitalAdmin identity missing. Please enroll admin with proper attributes first.');
+                console.error('HospitalAdmin identity missing. Run enrollAdmin.js first.');
                 return;
             }
 
-            // Build hospitalAdmin user object for CA authentication
             const provider = wallet.getProviderRegistry().getProvider(adminIdentity.type);
             const adminUser = await provider.getUserContext(adminIdentity, 'hospitalAdmin');
 
-            // Register doctor with CA
+            // Register doctor with attributes
             const secret = await ca.register(
                 {
                     affiliation: 'org1.department1',
@@ -66,7 +65,7 @@ async function main() {
                 adminUser
             );
 
-            // Enroll doctor and store identity in wallet
+            // Enroll doctor
             const enrollment = await ca.enroll({
                 enrollmentID: doctorId,
                 enrollmentSecret: secret,
@@ -93,11 +92,7 @@ async function main() {
 
         // ---------------- Onboard Doctor using hospitalAdmin ----------------
         const gateway = new Gateway();
-        await gateway.connect(ccp, {
-            wallet,
-            identity: 'hospitalAdmin', // must be hospitalAdmin
-            discovery: { enabled: true, asLocalhost: true },
-        });
+        await gateway.connect(ccp, { wallet, identity: 'hospitalAdmin', discovery: { enabled: true, asLocalhost: true } });
 
         const network = await gateway.getNetwork('mychannel');
         const contract = network.getContract('ehrChainCode');

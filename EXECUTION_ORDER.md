@@ -75,7 +75,7 @@ $ node cert-script/onboardHospital01.js
 
 **Verify**: Success message showing hospital onboarded
 
----
+<!-- ---
 
 ### Step 6: Onboard Doctor
 ```bash
@@ -91,7 +91,7 @@ $ node cert-script/onboardDoctor.js
 
 **Alternative**: After Step 10 (server running), you can use API `POST /auth/registerDoctor` instead
 
----
+--- -->
 
 ### Step 7: Onboard Insurance Company
 ```bash
