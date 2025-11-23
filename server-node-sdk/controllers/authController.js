@@ -82,6 +82,22 @@ exports.loginPatient = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+exports.loginDoctor = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    const result = await helper.login(userId);
+    res.status(200).send(responses.ok(result));
+  } catch (err) { next(err); }
+};
+
+exports.loginInsuranceAgent = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    const result = await helper.login(userId);
+    res.status(200).send(responses.ok(result));
+  } catch (err) { next(err); }
+};
+
 exports.registerHospitalAdmin = async (req, res, next) => {
   try {
     const { adminId, userId, hospitalId, name, address } = req.body; 

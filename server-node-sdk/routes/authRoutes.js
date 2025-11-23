@@ -11,7 +11,9 @@ router.post('/registerHospitalAdmin', auth.registerHospitalAdmin);
 router.post('/registerInsuranceAdmin', auth.registerInsuranceAdmin);
 // Note: registerDoctor requires adminId in body (hospital admin)
 router.post('/registerDoctor', requireUser, auth.registerDoctor);
+router.post('/loginDoctor', auth.loginDoctor);
 // Note: registerInsuranceAgent requires adminId in body (insurance admin)
 router.post('/registerInsuranceAgent', requireUser, auth.registerInsuranceAgent);
+router.post('/loginInsuranceAgent', auth.loginInsuranceAgent);
 
 module.exports = router;
