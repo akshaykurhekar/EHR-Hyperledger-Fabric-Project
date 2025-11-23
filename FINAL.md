@@ -369,7 +369,7 @@ curl -X POST http://localhost:5000/auth/registerInsuranceAdmin \
 ---
 
 ## API Testing
-
+  
 ### Step 10: Test Complete Workflow
 
 Now you can test the complete system. Follow the execution order:

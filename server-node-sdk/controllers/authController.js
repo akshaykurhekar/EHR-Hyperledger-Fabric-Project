@@ -153,8 +153,9 @@ exports.registerDoctor = async (req, res, next) => {
       throw new Error('Missing required fields: adminId (or x-userid header), doctorId/userId, hospitalId, name, city');
     }
 
-    // Register and enroll doctor with attributes
-    await registerAndEnroll('org1', adminId, newDoctorId, [
+    // Use 'hospitalAdmin' for CA registration (has registrar permissions)
+    // The adminId from request is used for chaincode invocation
+    await registerAndEnroll('org1', 'hospitalAdmin', newDoctorId, [
       { name: 'role', value: 'doctor', ecert: true },
       { name: 'uuid', value: newDoctorId, ecert: true }
     ]);
@@ -179,8 +180,9 @@ exports.registerInsuranceAgent = async (req, res, next) => {
       throw new Error('Missing required fields: adminId (or x-userid header), agentId/userId, insuranceId, name, city');
     }
 
-    // Register and enroll insurance agent with attributes
-    await registerAndEnroll('org2', adminId, newAgentId, [
+    // Use 'insuranceAdmin' for CA registration (has registrar permissions)
+    // The adminId from request is used for chaincode invocation
+    await registerAndEnroll('org2', 'insuranceAdmin', newAgentId, [
       { name: 'role', value: 'insuranceAgent', ecert: true },
       { name: 'uuid', value: newAgentId, ecert: true }
     ]);

@@ -35,7 +35,9 @@ exports.getRecordsByPatient = async (req,res,next) => {
     const userId = req.user.id;
     const patientId = req.params.patientId;
     const result = await query.getQuery('getAllRecordsByPatientId', { patientId }, userId);
-    res.status(200).send(responses.ok(result));
+    // Parse the JSON string result to return as array
+    const records = JSON.parse(result);
+    res.status(200).send(responses.ok(records));
   } catch(err){ next(err); }
 };
 

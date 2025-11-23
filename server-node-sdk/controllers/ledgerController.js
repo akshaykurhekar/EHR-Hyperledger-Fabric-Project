@@ -14,6 +14,8 @@ exports.queryHistory = async (req,res,next) => {
     const userId = req.user.id;
     const assetId = req.params.assetId;
     const result = await query.getQuery('queryHistoryOfAsset', { assetId }, userId);
-    res.status(200).send(responses.ok(result));
+    // Parse the JSON string result to return as array
+    const history = JSON.parse(result);
+    res.status(200).send(responses.ok(history));
   } catch(err){ next(err); }
 };

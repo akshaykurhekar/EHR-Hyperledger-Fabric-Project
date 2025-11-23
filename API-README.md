@@ -263,7 +263,7 @@ Submit a new insurance claim for processing.
     "claim": {
       "claimId": "CLAIM-xyz789",
       "patientId": "patient01",
-      "doctorId": "Doctor-Rama04",
+      "doctorId": "Doctor-Rama04",  
       "policyId": "POL123",
       "hospitalId": "Hospital01",
       "claimAmount": 5000,

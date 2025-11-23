@@ -483,12 +483,12 @@ x-userid: doctor01
 
 **Body:**
 ```json
-{
-  "patientId": "patient01",
-  "diagnosis": "Fever",
-  "treatment": "Prescribed medication",
-  "notes": "Patient responded well"
-}
+  {
+    "patientId": "patient01",
+    "diagnosis": "Fever",
+    "treatment": "Prescribed medication",
+    "notes": "Patient responded well"
+  }
 ```
 
 ---
@@ -504,11 +504,11 @@ x-userid: doctor01
 
 **Body:**
 ```json
-{
-  "claimId": "CLAIM-xxx",
-  "verified": true,
-  "notes": "Claim is valid"
-}
+  {
+    "claimId": "CLAIM-xxx",
+    "verified": true,
+    "notes": "Claim is valid"
+  }
 ```
 
 ---
@@ -686,7 +686,7 @@ x-userid: Hospital01
 
 **Headers:**
 ```
-Content-Type: application/json
+  e: application/json
 x-userid: Hospital01
 ```
 

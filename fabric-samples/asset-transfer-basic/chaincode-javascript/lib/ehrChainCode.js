@@ -184,7 +184,23 @@ class ehrChainCode extends Contract {
   async getAllRecordsByPatientId(ctx,args){
     const { patientId } = JSON.parse(args);
     const iterator = await ctx.stub.getStateByPartialCompositeKey('record',[patientId]);
-    const results = []; for await (const res of iterator) results.push(JSON.parse(res.value.toString('utf8')));
+    const results = [];
+    try {
+      // Use iterator.next() method for better compatibility
+      let res = await iterator.next();
+      while (!res.done) {
+        if (res.value) {
+          try {
+            results.push(JSON.parse(res.value.value.toString('utf8')));
+          } catch (e) {
+            // Skip invalid records
+          }
+        }
+        res = await iterator.next();
+      }
+    } finally {
+      await iterator.close();
+    }
     return JSON.stringify(results);
   }
 
@@ -486,8 +502,35 @@ async getAllHospitals(ctx,args){
 
   async queryHistoryOfAsset(ctx,args){
     const { assetId } = JSON.parse(args);
-    const iterator = await ctx.stub.getHistoryForKey(assetId); const out = [];
-    while(true){ const r = await iterator.next(); if(r.value){ const tx = { txId: r.value.txId, timestamp: r.value.timestamp ? r.value.timestamp.toISOString() : null, isDelete: r.value.isDelete }; try{ if(r.value.value && r.value.value.length && !r.value.isDelete) tx.asset = JSON.parse(r.value.value.toString('utf8')); }catch(e){ tx.asset = null; } out.push(tx); } if(r.done){ await iterator.close(); break; } } return stringify(out);
+    if (!assetId) throw new Error('assetId is required');
+    const iterator = await ctx.stub.getHistoryForKey(assetId);
+    const out = [];
+    try {
+      while(true) {
+        const r = await iterator.next();
+        if(r.value) {
+          const tx = {
+            txId: r.value.txId,
+            timestamp: r.value.timestamp ? r.value.timestamp.toISOString() : null,
+            isDelete: r.value.isDelete
+          };
+          try {
+            if(r.value.value && r.value.value.length && !r.value.isDelete) {
+              tx.asset = JSON.parse(r.value.value.toString('utf8'));
+            }
+          } catch(e) {
+            tx.asset = null;
+          }
+          out.push(tx);
+        }
+        if(r.done) {
+          break;
+        }
+      }
+    } finally {
+      await iterator.close();
+    }
+    return stringify(out);
   }
 
   async getByKey(ctx,args){
