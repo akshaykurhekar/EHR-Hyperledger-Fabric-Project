@@ -19,8 +19,9 @@ async function main() {
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
         // Create a new CA client for interacting with the CA.
-        const caURL = ccp.certificateAuthorities['ca.org1.example.com'].url;
-        const ca = new FabricCAServices(caURL);
+        const caInfo = ccp.certificateAuthorities['ca.org1.example.com'];
+        const caTLSCACerts = caInfo.tlsCACerts.pem;
+        const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
         // Create a new file system based wallet for managing identities.
         const walletPath = path.join(process.cwd(), 'wallet');
@@ -68,6 +69,30 @@ async function main() {
         };
         await wallet.put('Hospital01', x509Identity);
         console.log('Successfully registered and enrolled hospitalAdmin user "Hospital01" and imported it into the wallet');
+
+        // -----------------------Onboard Hospital on Chaincode------------------ 
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'Hospital01', discovery: { enabled: true, asLocalhost: true } });
+        
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+        
+        // Get the contract from the network.
+        const contract = network.getContract('ehrChainCode');
+
+        const args = {
+            hospitalId: "Hospital01",
+            name: "ABC Hospital",
+            address: "123 Medical Street, City"
+        };
+
+        const res = await contract.submitTransaction('onboardHospitalAdmin', JSON.stringify(args));
+        console.log("\n === Onboard Hospital Admin success === \n", res.toString());
+
+        // Disconnect from the gateway.
+        gateway.disconnect();
+
     } catch (error) {
         console.error(`Failed to register user "Hospital01": ${error}`);
         process.exit(1);

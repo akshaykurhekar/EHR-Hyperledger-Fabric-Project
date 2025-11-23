@@ -19,8 +19,9 @@ async function main() {
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
         // Create a new CA client for interacting with the CA.
-        const caURL = ccp.certificateAuthorities['ca.org2.example.com'].url;
-        const ca = new FabricCAServices(caURL);
+        const caInfo = ccp.certificateAuthorities['ca.org2.example.com'];
+        const caTLSCACerts = caInfo.tlsCACerts.pem;
+        const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
         // Create a new file system based wallet for managing identities.
         const walletPath = path.join(process.cwd(), 'wallet');
@@ -51,7 +52,7 @@ async function main() {
             affiliation: 'org2.department1',
             enrollmentID: 'insuranceAgent-Rama',
             role: 'client',
-            attrs: [{ name: 'role', value: 'agent', ecert: true },{ name: 'uuid', value: 'insuranceAgent-Rama', ecert: true }],
+            attrs: [{ name: 'role', value: 'insuranceAgent', ecert: true },{ name: 'uuid', value: 'insuranceAgent-Rama', ecert: true }],
         }, adminUser);
         const enrollment = await ca.enroll({
             enrollmentID: 'insuranceAgent-Rama',
@@ -81,14 +82,14 @@ async function main() {
                 const contract = network.getContract('ehrChainCode');
 
                 const args = {
-                    agentId:"insuranceAgent01",
-                    insuranceCompany:"insuranceCompany01-XYZ",
+                    agentId:"insuranceAgent-Rama",
+                    insuranceId:"insuranceCompany01",
                     name:"Rama",
                     city:"Amravati"
                 }
 
-                const res = await contract.submitTransaction('onboardInsurance', JSON.stringify(args));
-                console.log("/n === Onboard Agent success === /n", res.toString());
+                const res = await contract.submitTransaction('onboardInsuranceAgent', JSON.stringify(args));
+                console.log("\n === Onboard Agent success === \n", res.toString());
         
                 // const result2 = await contract.evaluateTransaction('GetAllAssets');
                 // console.log('/n === GetAllAssets === /n', result2.toString());

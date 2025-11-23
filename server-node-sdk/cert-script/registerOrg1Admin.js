@@ -30,7 +30,7 @@ async function main() {
         // Check to see if we've already enrolled the admin user.
         const identity = await wallet.get('hospitalAdmin');
         if (identity) {
-            console.log('An identity for the admin user "admin" already exists in the wallet');
+            console.log('An identity for the admin user "hospitalAdmin" already exists in the wallet');
             return;
         }
 
@@ -45,10 +45,10 @@ async function main() {
             type: 'X.509',
         };
         await wallet.put('hospitalAdmin', x509Identity);
-        console.log('Successfully enrolled admin user "admin1" and imported it into the wallet');
+        console.log('Successfully enrolled admin user "hospitalAdmin" and imported it into the wallet');
 
     } catch (error) {
-        console.error(`Failed to enroll admin user "admin1": ${error}`);
+        console.error(`Failed to enroll admin user "hospitalAdmin": ${error}`);
         process.exit(1);
     }
 }

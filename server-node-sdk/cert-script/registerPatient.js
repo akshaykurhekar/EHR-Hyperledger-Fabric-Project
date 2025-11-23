@@ -14,8 +14,8 @@ const path = require('path');
 async function main() {
     try {
         // load the network configuration
+        // Patients can be registered in either Org1 or Org2, using Org1 as default
         const ccpPath = path.resolve(__dirname, '../..', 'fabric-samples', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
-        // const ccpPath = path.resolve(__dirname, '..', '..','HLF-Alpha_token-Faucet', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
         // Create a new CA client for interacting with the CA.
@@ -28,10 +28,16 @@ async function main() {
         const wallet = await Wallets.newFileSystemWallet(walletPath);
         console.log(`Wallet path: ${walletPath}`);
 
+        // Patient ID - can be passed as command line argument or hardcoded
+        const patientId = process.argv[2] || 'patient01';
+        const patientName = process.argv[3] || 'John Doe';
+        const patientDob = process.argv[4] || '01/01/1990';
+        const patientCity = process.argv[5] || 'City';
+
         // Check to see if we've already enrolled the user.
-        const userIdentity = await wallet.get('Doctor-Rama04');
+        const userIdentity = await wallet.get(patientId);
         if (userIdentity) {
-            console.log('An identity for the user "Doctor-Rama04" already exists in the wallet');
+            console.log(`An identity for the user "${patientId}" already exists in the wallet`);
             return;
         }
 
@@ -39,7 +45,7 @@ async function main() {
         const adminIdentity = await wallet.get('hospitalAdmin');
         if (!adminIdentity) {
             console.log('An identity for the hospitalAdmin user "hospitalAdmin" does not exist in the wallet');
-            console.log('Run the enrollAdmin.js application before retrying');
+            console.log('Run the registerOrg1Admin.js application before retrying');
             return;
         }
 
@@ -50,12 +56,12 @@ async function main() {
         // Register the user, enroll the user, and import the new identity into the wallet.
         const secret = await ca.register({
             affiliation: 'org1.department1',
-            enrollmentID: 'Doctor-Rama04',
+            enrollmentID: patientId,
             role: 'client',
-            attrs: [{ name: 'role', value: 'doctor', ecert: true },{ name: 'uuid', value: 'Doctor-Rama04', ecert: true }],
+            attrs: [{ name: 'role', value: 'patient', ecert: true },{ name: 'uuid', value: patientId, ecert: true }],
         }, adminUser);
         const enrollment = await ca.enroll({
-            enrollmentID: 'Doctor-Rama04',
+            enrollmentID: patientId,
             enrollmentSecret: secret,
             attr_reqs: [{ name: "role", optional: false },{ name: "uuid", optional: false }]
         });
@@ -67,45 +73,38 @@ async function main() {
             mspId: 'Org1MSP',
             type: 'X.509',
         };
-        await wallet.put('Doctor-Rama04', x509Identity);
-        console.log('Successfully registered and enrolled hospitalAdmin user "Doctor-Rama04" and imported it into the wallet');
+        await wallet.put(patientId, x509Identity);
+        console.log(`Successfully registered and enrolled patient user "${patientId}" and imported it into the wallet`);
 
-        // -----------------------Create Wallet with default balance on ledger------------------ 
-                // Create a new gateway for connecting to our peer node.
-                const gateway = new Gateway();
-                await gateway.connect(ccp, { wallet, identity: 'Hospital01', discovery: { enabled: true, asLocalhost: true } });
+        // -----------------------Onboard Patient on Chaincode------------------ 
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: patientId, discovery: { enabled: true, asLocalhost: true } });
         
-                // Get the network (channel) our contract is deployed to.
-                const network = await gateway.getNetwork('mychannel');
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
         
-                // Get the contract from the network.
-                const contract = network.getContract('ehrChainCode');
+        // Get the contract from the network.
+        const contract = network.getContract('ehrChainCode');
 
-                // let doctorId="Doctor-Rama04";
-                // let hospitalName="Hospital01-ABC";
-                // let name="Rama";
-                // let city="Pune";
+        const args = {
+            patientId: patientId,
+            name: patientName,
+            dob: patientDob,
+            city: patientCity
+        };
 
-                const args = {
-                    doctorId: "Doctor-Rama04",
-                    hospitalId: "Hospital01",
-                    name: "Dr. Raj",
-                    city: "Pune"
-                };  
+        const res = await contract.submitTransaction('onboardPatient', JSON.stringify(args));
+        console.log("\n === Onboard Patient success === \n", res.toString());
 
-                const res = await contract.submitTransaction('onboardDoctor', JSON.stringify(args));
-                console.log("\n === Onboard Doctor success === \n", res.toString());
-        
-                // const result2 = await contract.evaluateTransaction('GetAllAssets');
-                // console.log('/n === GetAllAssets === /n', result2.toString());
-
-                // Disconnect from the gateway.
-                gateway.disconnect();
+        // Disconnect from the gateway.
+        gateway.disconnect();
 
     } catch (error) {
-        console.error(`Failed to register user "Doctor-Rama04": ${error}`);
+        console.error(`Failed to register patient: ${error}`);
         process.exit(1);
       }
 }
 
 main();
+
