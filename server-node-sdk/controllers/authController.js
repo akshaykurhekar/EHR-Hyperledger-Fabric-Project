@@ -126,32 +126,53 @@ exports.registerInsuranceAdmin = async (req, res, next) => {
 
 exports.registerDoctor = async (req, res, next) => {
   try {
-    const { adminId, doctorId, hospitalId, name, city } = req.body;
-    if (!adminId || !doctorId || !hospitalId || !name || !city) throw new Error('Missing required fields');
+    // Get adminId from authenticated user (header) or body
+    const adminId = req.user?.id || req.body.adminId;
+    const { doctorId, userId, hospitalId, name, city } = req.body;
+    
+    // Support both doctorId and userId for consistency
+    const newDoctorId = doctorId || userId;
+    
+    if (!adminId || !newDoctorId || !hospitalId || !name || !city) {
+      throw new Error('Missing required fields: adminId (or x-userid header), doctorId/userId, hospitalId, name, city');
+    }
 
-    await registerAndEnroll('org1', adminId, doctorId, [
+    // Register and enroll doctor with attributes
+    await registerAndEnroll('org1', adminId, newDoctorId, [
       { name: 'role', value: 'doctor', ecert: true },
-      { name: 'uuid', value: doctorId, ecert: true }
+      { name: 'uuid', value: newDoctorId, ecert: true }
     ]);
 
-    const payload = { doctorId, hospitalId, name, city };
+    // Use adminId (hospital admin) to invoke - chaincode will verify role='hospital'
+    const payload = { doctorId: newDoctorId, hospitalId, name, city };
     const result = await invoke.invokeTransaction('onboardDoctor', payload, adminId);
-    res.status(200).send(responses.ok({ success: true, doctorId, chaincodeResult: result }));
+    res.status(200).send(responses.ok({ success: true, doctorId: newDoctorId, userId: newDoctorId, chaincodeResult: result }));
   } catch (err) { next(err); }
 };
 
 exports.registerInsuranceAgent = async (req, res, next) => {
   try {
-    const { adminId, agentId, insuranceId, name, city } = req.body;
-    if (!adminId || !agentId || !insuranceId || !name || !city) throw new Error('Missing required fields');
+    // Get adminId from authenticated user (header) or body
+    const adminId = req.user?.id || req.body.adminId;
+    const { agentId, userId, insuranceId, name, city } = req.body;
+    
+    // Support both agentId and userId for consistency
+    const newAgentId = agentId || userId;
+    
+    if (!adminId || !newAgentId || !insuranceId || !name || !city) {
+      throw new Error('Missing required fields: adminId (or x-userid header), agentId/userId, insuranceId, name, city');
+    }
 
-    await registerAndEnroll('org2', adminId, agentId, [
+    // Register and enroll insurance agent with attributes
+    await registerAndEnroll('org2', adminId, newAgentId, [
       { name: 'role', value: 'insuranceAgent', ecert: true },
-      { name: 'uuid', value: agentId, ecert: true }
+      { name: 'uuid', value: newAgentId, ecert: true }
     ]);
 
-    const payload = { agentId, insuranceId, name, city };
-    const result = await invoke.invokeTransaction('onboardInsuranceAgent', payload, adminId);
-    res.status(200).send(responses.ok({ success: true, agentId, chaincodeResult: result }));
+    // Use adminId (insurance admin) to invoke - chaincode will verify role='insuranceAdmin'
+    // Use org2 for insurance-related transactions
+    const payload = { agentId: newAgentId, insuranceId, name, city };
+    const result = await invoke.invokeTransaction('onboardInsuranceAgent', payload, adminId, 'org2');
+    res.status(200).send(responses.ok({ success: true, agentId: newAgentId, userId: newAgentId, chaincodeResult: result }));
   } catch (err) { next(err); }
 };
