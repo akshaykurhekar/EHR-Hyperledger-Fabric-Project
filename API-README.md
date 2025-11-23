@@ -377,3 +377,35 @@ Retrieve all medical records for a specific patient.
 
 **URL Parameters:**
 - `patientId` - The patient ID
+Authentication APIs (/auth)
+POST /auth/registerPatient
+POST /auth/loginPatient
+POST /auth/registerHospitalAdmin
+POST /auth/registerInsuranceAdmin
+Patient APIs (/patient)
+POST /patient/claim/submit
+POST /patient/grantAccess
+POST /patient/revokeAccess
+GET /patient/:patientId/claims
+GET /patient/:patientId/records
+Doctor APIs (/doctor)
+POST /doctor/addRecord
+POST /doctor/claim/verify
+GET /doctor/:doctorId/patients
+Insurance APIs (/insurance)
+POST /insurance/claim/review
+POST /insurance/claim/approve
+POST /insurance/claim/reject
+GET /insurance/claim/:claimId
+Admin APIs (/admin)
+POST /admin/hospital/doctor/add
+POST /admin/insurance/agent/add
+GET /admin/hospitals
+GET /admin/doctors
+Claims APIs (/claims)
+GET /claims/byStatus?status=<status>
+Ledger APIs (/ledger)
+POST /ledger/fetch
+GET /ledger/history/:assetId
+Root
+GET / - Health check
