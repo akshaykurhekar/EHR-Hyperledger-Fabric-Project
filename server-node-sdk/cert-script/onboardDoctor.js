@@ -68,12 +68,12 @@ async function main() {
             type: 'X.509',
         };
         await wallet.put('Doctor-Rama04', x509Identity);
-        console.log('Successfully registered and enrolled hospitalAdmin user "Doctor-Rama04" and imported it into the wallet');
+        console.log('Successfully registered and enrolled doctor user "Doctor-Rama04" and imported it into the wallet');
 
-        // -----------------------Create Wallet with default balance on ledger------------------ 
+        // -----------------------Onboard Doctor on Chaincode------------------ 
                 // Create a new gateway for connecting to our peer node.
                 const gateway = new Gateway();
-                await gateway.connect(ccp, { wallet, identity: 'Hospital01', discovery: { enabled: true, asLocalhost: true } });
+                await gateway.connect(ccp, { wallet, identity: 'hospitalAdmin', discovery: { enabled: true, asLocalhost: true } });
         
                 // Get the network (channel) our contract is deployed to.
                 const network = await gateway.getNetwork('mychannel');
