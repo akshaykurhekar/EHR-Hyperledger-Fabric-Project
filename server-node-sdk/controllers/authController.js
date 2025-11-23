@@ -84,28 +84,43 @@ exports.loginPatient = async (req, res, next) => {
 
 exports.registerHospitalAdmin = async (req, res, next) => {
   try {
-    const { userId, hospitalId, name, address } = req.body; 
-    if (!userId || !hospitalId || !name || !address) {
-      throw new Error('Missing required fields');
+    const { adminId, userId, hospitalId, name, address } = req.body; 
+    if (!adminId || !userId || !hospitalId || !name || !address) {
+      throw new Error('Missing required fields: adminId, userId, hospitalId, name, address');
     }
 
+    // Register and enroll hospital admin with attributes
+    await registerAndEnroll('org1', adminId, userId, [
+      { name: 'role', value: 'hospital', ecert: true },
+      { name: 'uuid', value: userId, ecert: true }
+    ]);
+
+    // Onboard hospital on chaincode using the newly registered hospital admin
     const payload = { hospitalId, name, address };
+    const result = await invoke.invokeTransaction('onboardHospitalAdmin', payload, userId);
 
-    // Use hospitalAdmin as the caller identity
-    const result = await invoke.invokeTransaction('onboardHospitalAdmin', payload, 'hospitalAdmin');
-
-    res.status(200).send(responses.ok({ success: true, hospitalId, chaincodeResult: result }));
+    res.status(200).send(responses.ok({ success: true, userId, hospitalId, chaincodeResult: result }));
   } catch (err) {
     next(err);
   }
 };
 exports.registerInsuranceAdmin = async (req, res, next) => {
   try {
-    const { userId, insuranceId, name, address } = req.body;
-    if (!userId) throw new Error('userId required');
+    const { adminId, userId, insuranceId, name, address } = req.body;
+    if (!adminId || !userId || !insuranceId || !name || !address) {
+      throw new Error('Missing required fields: adminId, userId, insuranceId, name, address');
+    }
+
+    // Register and enroll insurance admin with attributes
+    await registerAndEnroll('org2', adminId, userId, [
+      { name: 'role', value: 'insuranceAdmin', ecert: true },
+      { name: 'uuid', value: userId, ecert: true }
+    ]);
+
+    // Onboard insurance company on chaincode using the newly registered insurance admin
     const payload = { insuranceId, name, address };
     const result = await invoke.invokeTransaction('onboardInsuranceCompany', payload, userId);
-    res.status(200).send(responses.ok(result));
+    res.status(200).send(responses.ok({ success: true, userId, insuranceId, chaincodeResult: result }));
   } catch (err) { next(err); }
 };
 

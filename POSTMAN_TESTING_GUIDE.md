@@ -83,18 +83,26 @@ Content-Type: application/json
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: hospitalAdmin
 ```
+
+**Note**: No `x-userid` header required. Uses `adminId` from body.
 
 **Body:**
 ```json
 {
-  "userId": "hospitalAdmin02",
+  "adminId": "hospitalAdmin",
+  "userId": "Hospital01",
   "hospitalId": "Hospital01",
   "name": "City General Hospital",
   "address": "123 Main St, City, State"
 }
 ```
+
+**What this does:**
+- Registers and enrolls `Hospital01` with `role='hospital'` and `uuid='Hospital01'` attributes
+- Onboards the hospital on the blockchain
+- For first hospital admin, use `adminId: "hospitalAdmin"` (system admin)
+- For additional hospital admins, use existing hospital admin ID as `adminId`
 
 ---
 
@@ -104,34 +112,42 @@ x-userid: hospitalAdmin
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: insuranceAdmin
 ```
+
+**Note**: No `x-userid` header required. Uses `adminId` from body.
 
 **Body:**
 ```json
 {
-  "userId": "insuranceAdmin01",
+  "adminId": "insuranceAdmin",
+  "userId": "Insurance01",
   "insuranceId": "Insurance01",
   "name": "Health Insurance Co",
   "address": "456 Insurance Ave, City, State"
 }
 ```
 
+**What this does:**
+- Registers and enrolls `Insurance01` with `role='insuranceAdmin'` and `uuid='Insurance01'` attributes
+- Onboards the insurance company on the blockchain
+- For first insurance admin, use `adminId: "insuranceAdmin"` (system admin)
+- For additional insurance admins, use existing insurance admin ID as `adminId`
+
 ---
 
-### 1.5 Register Doctor
+### 1.5 Register Doctor (Onboard Doctor)
 **POST** `/auth/registerDoctor`
 
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Body:**
 ```json
 {
-  "adminId": "hospitalAdmin",
+  "adminId": "Hospital01",
   "doctorId": "doctor01",
   "hospitalId": "Hospital01",
   "name": "Dr. Jane Smith",
@@ -139,27 +155,39 @@ x-userid: hospitalAdmin
 }
 ```
 
+**What this does:**
+- Registers and enrolls `doctor01` with `role='doctor'` and `uuid='doctor01'` attributes
+- Onboards the doctor on the blockchain
+- Assigns doctor to hospital
+- **Note**: Use hospital admin ID (e.g., `Hospital01`) as `adminId`, not `hospitalAdmin`
+
 ---
 
-### 1.6 Register Insurance Agent
+### 1.6 Register Insurance Agent (Onboard Agent)
 **POST** `/auth/registerInsuranceAgent`
 
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: insuranceAdmin
+x-userid: Insurance01
 ```
 
 **Body:**
 ```json
 {
-  "adminId": "insuranceAdmin01",
+  "adminId": "Insurance01",
   "agentId": "agent01",
   "insuranceId": "Insurance01",
   "name": "Agent John",
   "city": "New York"
 }
 ```
+
+**What this does:**
+- Registers and enrolls `agent01` with `role='insuranceAgent'` and `uuid='agent01'` attributes
+- Onboards the agent on the blockchain
+- Assigns agent to insurance company
+- **Note**: Use insurance admin ID (e.g., `Insurance01`) as `adminId`, not `insuranceAdmin`
 
 ---
 
@@ -478,7 +506,7 @@ x-userid: agent01
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Body:**
@@ -491,6 +519,8 @@ x-userid: hospitalAdmin
 }
 ```
 
+**Note**: Use this endpoint only if doctor is already registered. Otherwise use `/auth/registerDoctor` which registers AND onboard the doctor.
+
 ---
 
 ### 5.2 Assign Doctor to Hospital
@@ -499,7 +529,7 @@ x-userid: hospitalAdmin
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Body:**
@@ -518,7 +548,7 @@ x-userid: hospitalAdmin
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: insuranceAdmin
+x-userid: Insurance01
 ```
 
 **Body:**
@@ -531,6 +561,8 @@ x-userid: insuranceAdmin
 }
 ```
 
+**Note**: Use this endpoint only if agent is already registered. Otherwise use `/auth/registerInsuranceAgent` which registers AND onboard the agent.
+
 ---
 
 ### 5.4 Assign Agent to Insurance
@@ -539,7 +571,7 @@ x-userid: insuranceAdmin
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: insuranceAdmin
+x-userid: Insurance01
 ```
 
 **Body:**
@@ -557,7 +589,7 @@ x-userid: insuranceAdmin
 
 **Headers:**
 ```
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 ---
@@ -567,7 +599,7 @@ x-userid: hospitalAdmin
 
 **Headers:**
 ```
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 ---
@@ -577,7 +609,7 @@ x-userid: hospitalAdmin
 
 **Headers:**
 ```
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 ---
@@ -587,7 +619,7 @@ x-userid: hospitalAdmin
 
 **Headers:**
 ```
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Example:** `DELETE /admin/user/patient01`
@@ -639,7 +671,7 @@ x-userid: doctor01
 
 **Headers:**
 ```
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Example:** `GET /claims/byHospital/Hospital01`
@@ -654,7 +686,7 @@ x-userid: hospitalAdmin
 **Headers:**
 ```
 Content-Type: application/json
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Body:**
@@ -669,7 +701,7 @@ x-userid: hospitalAdmin
 
 **Headers:**
 ```
-x-userid: hospitalAdmin
+x-userid: Hospital01
 ```
 
 **Example:** `GET /ledger/history/patient01`
@@ -694,26 +726,49 @@ x-userid: hospitalAdmin
 
 ## Testing Workflow
 
-### Step 1: Setup (Run once)
-1. Register Hospital Admin: `POST /auth/registerHospitalAdmin`
-2. Register Insurance Admin: `POST /auth/registerInsuranceAdmin`
+**⚠️ IMPORTANT: Follow this exact order to avoid UUID/roles errors!**
 
-### Step 2: Register Users
-1. Register Patient: `POST /auth/registerPatient`
-2. Register Doctor: `POST /auth/registerDoctor`
-3. Register Insurance Agent: `POST /auth/registerInsuranceAgent`
+### Step 1: Setup (Run once - REQUIRED FIRST)
+1. **Register First Hospital Admin**: `POST /auth/registerHospitalAdmin`
+   - Body: `{ "adminId": "hospitalAdmin", "userId": "Hospital01", "hospitalId": "Hospital01", ... }`
+   - This registers Hospital01 with proper role and uuid attributes
 
-### Step 3: Login
+2. **Register First Insurance Admin**: `POST /auth/registerInsuranceAdmin`
+   - Body: `{ "adminId": "insuranceAdmin", "userId": "Insurance01", "insuranceId": "Insurance01", ... }`
+   - This registers Insurance01 with proper role and uuid attributes
+
+### Step 2: Register Users (After Step 1)
+1. **Register Doctor**: `POST /auth/registerDoctor`
+   - Headers: `x-userid: Hospital01`
+   - Body: `{ "adminId": "Hospital01", "doctorId": "doctor01", ... }`
+   - This registers AND onboard the doctor
+
+2. **Register Patient**: `POST /auth/registerPatient`
+   - Body: `{ "adminId": "hospitalAdmin", "userId": "patient01", ... }`
+
+3. **Register Insurance Agent**: `POST /auth/registerInsuranceAgent`
+   - Headers: `x-userid: Insurance01`
+   - Body: `{ "adminId": "Insurance01", "agentId": "agent01", ... }`
+   - This registers AND onboard the agent
+
+### Step 3: Login (Optional - for verification)
 1. Login Patient: `POST /auth/loginPatient`
 
 ### Step 4: Create Medical Records
 1. Add Record: `POST /doctor/addRecord` (as doctor)
+   - Headers: `x-userid: doctor01`
 
 ### Step 5: Submit and Process Claims
 1. Submit Claim: `POST /patient/claim/submit` (as patient)
+   - Headers: `x-userid: patient01`
 2. Verify Claim: `POST /doctor/claim/verify` (as doctor)
+   - Headers: `x-userid: doctor01`
 3. Review Claim: `POST /insurance/claim/review` (as agent)
+   - Headers: `x-userid: agent01`
 4. Approve/Reject Claim: `POST /insurance/claim/approve` or `/insurance/claim/reject` (as agent)
+   - Headers: `x-userid: agent01`
+
+**📋 For detailed execution order, see `API_EXECUTION_ORDER.md`**
 
 ---
 
@@ -727,9 +782,12 @@ x-userid: hospitalAdmin
 
 ### Issue: "Missing uuid and roles" error
 **Solution:** 
-1. Ensure users are registered with proper attributes (role and uuid)
-2. The registration endpoints automatically add these attributes
-3. If the error persists, re-register the user
+1. **Root Cause**: User was not registered with attributes properly, or wrong userId is being used
+2. **For Hospital Admin**: Make sure you registered using `/auth/registerHospitalAdmin` with `adminId` in body
+3. **For Insurance Admin**: Make sure you registered using `/auth/registerInsuranceAdmin` with `adminId` in body
+4. **For Doctors/Agents**: Use `/auth/registerDoctor` or `/auth/registerInsuranceAgent` which automatically add attributes
+5. **Re-register**: If error persists, delete user from wallet and re-register using the appropriate registration endpoint
+6. **Check Headers**: Ensure you're using the correct userId in `x-userid` header (e.g., `Hospital01` not `hospitalAdmin`)
 
 ### Issue: 401 Unauthorized
 **Solution:** 
@@ -748,8 +806,8 @@ base_url: http://localhost:5000
 patient_id: patient01
 doctor_id: doctor01
 agent_id: agent01
-hospital_admin: hospitalAdmin
-insurance_admin: insuranceAdmin
+hospital_admin_id: Hospital01
+insurance_admin_id: Insurance01
 ```
 
 Then use them in requests like: `{{base_url}}/auth/registerPatient`

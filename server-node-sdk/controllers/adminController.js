@@ -6,7 +6,12 @@ exports.addDoctor = async (req,res,next) => {
   try{
     const userId = req.user.id;
     const { doctorId, hospitalId, name, city } = req.body;
-    const payload = JSON.stringify({ doctorId, hospitalId, name, city });
+    if (!doctorId || !hospitalId || !name || !city) {
+      throw new Error('Missing required fields: doctorId, hospitalId, name, city');
+    }
+    // Note: This endpoint assumes doctor is already registered/enrolled
+    // Use /auth/registerDoctor to register AND onboard a new doctor
+    const payload = { doctorId, hospitalId, name, city };
     const result = await invoke.invokeTransaction('onboardDoctor', payload, userId);
     res.status(200).send(responses.ok(result));
   } catch(err){ next(err); }
@@ -16,7 +21,12 @@ exports.addInsuranceAgent = async (req,res,next) => {
   try{
     const userId = req.user.id;
     const { agentId, insuranceId, name, city } = req.body;
-    const payload = JSON.stringify({ agentId, insuranceId, name, city });
+    if (!agentId || !insuranceId || !name || !city) {
+      throw new Error('Missing required fields: agentId, insuranceId, name, city');
+    }
+    // Note: This endpoint assumes agent is already registered/enrolled
+    // Use /auth/registerInsuranceAgent to register AND onboard a new agent
+    const payload = { agentId, insuranceId, name, city };
     const result = await invoke.invokeTransaction('onboardInsuranceAgent', payload, userId);
     res.status(200).send(responses.ok(result));
   } catch(err){ next(err); }
@@ -42,11 +52,7 @@ exports.assignDoctor = async (req,res,next) => {
   try{
     const userId = req.user.id;
     const { doctorId, hospitalId } = req.body;
-    if(!doctorId || !hospitalId) throw new Error('Missing doctorId or hospitalId');
-    
-    // Get doctor and update hospitalId
-    const doctorResult = await query.getQuery('getDoctorById', { doctorId }, userId);
-    const doctor = JSON.parse(doctorResult);
+    if(!doctorId || !hospitalId) throw new Error('Missing required fields: doctorId, hospitalId');
     
     // Update doctor's hospital assignment
     const payload = { doctorId, hospitalId };
@@ -59,7 +65,7 @@ exports.assignInsuranceAgent = async (req,res,next) => {
   try{
     const userId = req.user.id;
     const { agentId, insuranceId } = req.body;
-    if(!agentId || !insuranceId) throw new Error('Missing agentId or insuranceId');
+    if(!agentId || !insuranceId) throw new Error('Missing required fields: agentId, insuranceId');
     
     // Update agent's insurance assignment
     const payload = { agentId, insuranceId };
