@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     initializeAuth()
   }, [])
 
-  const login = async (role, userId) => {
+  const login = async (role, email, password) => {
     try {
       let endpoint = ''
       switch (role) {
@@ -64,35 +64,75 @@ export const AuthProvider = ({ children }) => {
           endpoint = '/auth/loginInsuranceAgent'
           break
         case 'admin':
-          // Admin login uses hospital admin endpoint
-          endpoint = '/auth/loginPatient' // Using same endpoint structure
+          // Admin login uses patient endpoint for now
+          endpoint = '/auth/loginPatient'
           break
         default:
           throw new Error('Invalid role')
       }
 
-      const response = await api.post(endpoint, { userId })
+      const response = await api.post(endpoint, { email, password })
       
-      if (response.data.success) {
+      // Handle needsRegistration response
+      if (response.data.data?.needsRegistration) {
+        return {
+          success: false,
+          needsRegistration: true,
+          message: response.data.data.message || 'Please register first'
+        }
+      }
+
+      // Handle needsChaincodeRegistration response
+      if (response.data.data?.needsChaincodeRegistration) {
         const userData = {
-          userId,
+          userId: response.data.data.userId,
           role,
+          name: response.data.data.name,
+          registeredOnChain: false,
           ...response.data.data
         }
         
         setUser(userData)
         localStorage.setItem('user', JSON.stringify(userData))
-        localStorage.setItem('token', userId) // Using userId as token
-        api.defaults.headers.common['x-userid'] = userId
+        localStorage.setItem('token', userData.userId)
+        api.defaults.headers.common['x-userid'] = userData.userId
         
-        return { success: true, data: userData }
+        return {
+          success: true,
+          needsChaincodeRegistration: true,
+          userId: userData.userId,
+          message: response.data.data.message || 'Registration pending admin approval'
+        }
+      }
+
+      // Successful login
+      if (response.data.success && response.data.data) {
+        const userData = {
+          userId: response.data.data.userId,
+          role,
+          name: response.data.data.name,
+          registeredOnChain: response.data.data.registeredOnChain || false,
+          ...response.data.data
+        }
+        
+        setUser(userData)
+        localStorage.setItem('user', JSON.stringify(userData))
+        localStorage.setItem('token', userData.userId)
+        api.defaults.headers.common['x-userid'] = userData.userId
+        
+        return { 
+          success: true, 
+          data: userData 
+        }
       }
       
       throw new Error(response.data.message || 'Login failed')
     } catch (error) {
+      // Handle network errors and API errors
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed'
       return {
         success: false,
-        message: error.response?.data?.message || error.message || 'Login failed'
+        message: errorMessage
       }
     }
   }
@@ -113,4 +153,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
-

@@ -3,17 +3,28 @@ const router = express.Router();
 const auth = require('../controllers/authController');
 const requireUser = require('../middleware/requireUser');
 
+// New registration endpoints (with password)
 router.post('/registerPatient', auth.registerPatient);
+router.post('/registerDoctor', auth.registerDoctor);
+router.post('/registerInsuranceAgent', auth.registerInsuranceAgent);
+
+// Login endpoints (with email/password)
 router.post('/loginPatient', auth.loginPatient);
-// Note: registerHospitalAdmin requires adminId in body (system admin or existing hospital admin)
-router.post('/registerHospitalAdmin', auth.registerHospitalAdmin);
-// Note: registerInsuranceAdmin requires adminId in body (system admin or existing insurance admin)
-router.post('/registerInsuranceAdmin', auth.registerInsuranceAdmin);
-// Note: registerDoctor requires adminId in body (hospital admin)
-router.post('/registerDoctor', requireUser, auth.registerDoctor);
 router.post('/loginDoctor', auth.loginDoctor);
-// Note: registerInsuranceAgent requires adminId in body (insurance admin)
-router.post('/registerInsuranceAgent', requireUser, auth.registerInsuranceAgent);
 router.post('/loginInsuranceAgent', auth.loginInsuranceAgent);
+
+// Admin endpoints to complete blockchain registration
+router.post('/completePatientRegistration', auth.completePatientRegistration);
+router.post('/completeDoctorRegistration', requireUser, auth.completeDoctorRegistration);
+router.post('/completeInsuranceAgentRegistration', requireUser, auth.completeInsuranceAgentRegistration);
+
+// Legacy admin registration endpoints
+router.post('/registerHospitalAdmin', auth.registerHospitalAdmin);
+router.post('/registerInsuranceAdmin', auth.registerInsuranceAdmin);
+
+// Legacy endpoints for backward compatibility
+router.post('/registerPatientLegacy', auth.registerPatientLegacy);
+router.post('/registerDoctorLegacy', requireUser, auth.registerDoctorLegacy);
+router.post('/registerInsuranceAgentLegacy', requireUser, auth.registerInsuranceAgentLegacy);
 
 module.exports = router;

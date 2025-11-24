@@ -2,11 +2,12 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { toast } from 'react-toastify'
-import { FiShield, FiUserCheck, FiDollarSign, FiHeart, FiLogIn } from 'react-icons/fi'
+import { FiShield, FiUserCheck, FiDollarSign, FiHeart, FiLogIn, FiMail, FiLock } from 'react-icons/fi'
 
 const Login = () => {
   const [selectedRole, setSelectedRole] = useState('patient')
-  const [userId, setUserId] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -21,20 +22,39 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!userId.trim()) {
-      toast.error('Please enter your User ID')
+    if (!email.trim() || !password.trim()) {
+      toast.error('Please enter your email and password')
       return
     }
 
     setLoading(true)
-    const result = await login(selectedRole, userId.trim())
-    setLoading(false)
+    try {
+      const result = await login(selectedRole, email.trim(), password)
+      setLoading(false)
 
-    if (result.success) {
-      toast.success(`Welcome back, ${userId}!`)
-      navigate(`/${selectedRole}/dashboard`)
-    } else {
-      toast.error(result.message || 'Login failed. Please check your credentials.')
+      if (result.success) {
+        if (result.needsRegistration) {
+          // User needs to register - redirect to registration
+          toast.info('Please register first')
+          navigate('/register', { state: { role: selectedRole, email: email.trim() } })
+        } else if (result.needsChaincodeRegistration) {
+          // User registered but needs admin to complete blockchain registration
+          toast.warning(result.message || 'Your registration is pending. Please wait for admin approval.')
+          // Still allow login but show warning
+          if (result.userId) {
+            navigate(`/${selectedRole}/dashboard`)
+          }
+        } else {
+          // Successful login
+          toast.success(`Welcome back!`)
+          navigate(`/${selectedRole}/dashboard`)
+        }
+      } else {
+        toast.error(result.message || 'Login failed. Please check your credentials.')
+      }
+    } catch (error) {
+      setLoading(false)
+      toast.error(error.message || 'Login failed. Please try again.')
     }
   }
 
@@ -78,18 +98,39 @@ const Login = () => {
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
-                User ID
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
               </label>
-              <input
-                id="userId"
-                type="text"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter your User ID"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                required
-              />
+              <div className="relative">
+                <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  required
+                />
+              </div>
             </div>
 
             <button
@@ -127,4 +168,3 @@ const Login = () => {
 }
 
 export default Login
-

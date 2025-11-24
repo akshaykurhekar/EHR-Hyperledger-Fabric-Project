@@ -1,11 +1,15 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { submitRegistrationRequest } from '../services/registrationService'
-import { FiShield, FiUserCheck, FiDollarSign, FiHeart, FiUserPlus } from 'react-icons/fi'
+import api from '../services/api'
+import { FiShield, FiUserCheck, FiDollarSign, FiHeart, FiUserPlus, FiMail, FiLock } from 'react-icons/fi'
 
 const Register = () => {
-  const [selectedRole, setSelectedRole] = useState('patient')
+  const location = useLocation()
+  const [selectedRole, setSelectedRole] = useState(location.state?.role || 'patient')
+  const [email, setEmail] = useState(location.state?.email || '')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [formData, setFormData] = useState({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -13,9 +17,17 @@ const Register = () => {
   const roles = [
     { value: 'patient', label: 'Patient', icon: <FiHeart className="w-6 h-6" />, color: 'bg-pink-500' },
     { value: 'doctor', label: 'Doctor', icon: <FiUserCheck className="w-6 h-6" />, color: 'bg-blue-500' },
-    { value: 'hospital', label: 'Hospital Admin', icon: <FiShield className="w-6 h-6" />, color: 'bg-purple-500' },
-    { value: 'insurance', label: 'Insurance Admin', icon: <FiDollarSign className="w-6 h-6" />, color: 'bg-green-500' }
+    { value: 'insurance', label: 'Insurance Agent', icon: <FiDollarSign className="w-6 h-6" />, color: 'bg-green-500' }
   ]
+
+  useEffect(() => {
+    if (location.state?.role) {
+      setSelectedRole(location.state.role)
+    }
+    if (location.state?.email) {
+      setEmail(location.state.email)
+    }
+  }, [location.state])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -23,19 +35,99 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Validate password
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const result = await submitRegistrationRequest(selectedRole, formData)
-      
-      if (result.success) {
-        toast.success('Registration request submitted! Admin will review and approve your account.')
+      let endpoint = ''
+      let payload = {}
+
+      switch (selectedRole) {
+        case 'patient':
+          endpoint = '/auth/registerPatient'
+          if (!email || !password || !formData.name || !formData.dob || !formData.city) {
+            toast.error('Please fill in all required fields')
+            setLoading(false)
+            return
+          }
+          payload = {
+            email,
+            password,
+            name: formData.name,
+            dob: formData.dob,
+            city: formData.city,
+            doctorId: formData.doctorId || null
+          }
+          break
+
+        case 'doctor':
+          endpoint = '/auth/registerDoctor'
+          if (!email || !password || !formData.name || !formData.hospitalId || !formData.city) {
+            toast.error('Please fill in all required fields')
+            setLoading(false)
+            return
+          }
+          payload = {
+            email,
+            password,
+            name: formData.name,
+            hospitalId: formData.hospitalId,
+            city: formData.city
+          }
+          break
+
+        case 'insurance':
+          endpoint = '/auth/registerInsuranceAgent'
+          if (!email || !password || !formData.name || !formData.insuranceId || !formData.city) {
+            toast.error('Please fill in all required fields')
+            setLoading(false)
+            return
+          }
+          payload = {
+            email,
+            password,
+            name: formData.name,
+            insuranceId: formData.insuranceId,
+            city: formData.city
+          }
+          break
+
+        default:
+          toast.error('Invalid role selected')
+          setLoading(false)
+          return
+      }
+
+      const response = await api.post(endpoint, payload)
+
+      if (response.data.success) {
+        toast.success(response.data.data?.message || 'Registration successful! Your userId has been generated. An admin will complete your blockchain registration shortly.')
+        
+        // Show userId to user
+        if (response.data.data?.userId) {
+          toast.info(`Your User ID: ${response.data.data.userId}. Please save this for future reference.`)
+        }
+
         setTimeout(() => {
-          navigate('/login')
-        }, 2000)
+          navigate('/login', { state: { email, role: selectedRole } })
+        }, 3000)
+      } else {
+        toast.error(response.data.message || 'Registration failed')
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to submit registration request')
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -46,17 +138,6 @@ const Register = () => {
       case 'patient':
         return (
           <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">User ID *</label>
-              <input
-                type="text"
-                value={formData.userId || ''}
-                onChange={(e) => handleInputChange('userId', e.target.value)}
-                placeholder="patient01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
               <input
@@ -91,7 +172,7 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Doctor ID</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Doctor ID (Optional)</label>
               <input
                 type="text"
                 value={formData.doctorId || ''}
@@ -102,21 +183,10 @@ const Register = () => {
             </div>
           </>
         )
-      
+
       case 'doctor':
         return (
           <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Doctor ID *</label>
-              <input
-                type="text"
-                value={formData.doctorId || ''}
-                onChange={(e) => handleInputChange('doctorId', e.target.value)}
-                placeholder="doctor01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
               <input
@@ -152,60 +222,21 @@ const Register = () => {
             </div>
           </>
         )
-      
-      case 'hospital':
+
+      case 'insurance':
         return (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hospital ID *</label>
-              <input
-                type="text"
-                value={formData.hospitalId || ''}
-                onChange={(e) => handleInputChange('hospitalId', e.target.value)}
-                placeholder="Hospital01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">User ID *</label>
-              <input
-                type="text"
-                value={formData.userId || ''}
-                onChange={(e) => handleInputChange('userId', e.target.value)}
-                placeholder="Hospital01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hospital Name *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
               <input
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="City General Hospital"
+                placeholder="Agent Name"
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
-              <textarea
-                value={formData.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="123 Main St, City, State"
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-          </>
-        )
-      
-      case 'insurance':
-        return (
-          <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Insurance ID *</label>
               <input
@@ -218,41 +249,19 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">User ID *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
               <input
                 type="text"
-                value={formData.userId || ''}
-                onChange={(e) => handleInputChange('userId', e.target.value)}
-                placeholder="Insurance01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
-              <input
-                type="text"
-                value={formData.name || ''}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Health Insurance Co"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
-              <textarea
-                value={formData.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="456 Insurance Ave, City, State"
-                rows="3"
+                value={formData.city || ''}
+                onChange={(e) => handleInputChange('city', e.target.value)}
+                placeholder="New York"
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 required
               />
             </div>
           </>
         )
-      
+
       default:
         return null
     }
@@ -268,13 +277,13 @@ const Register = () => {
               <FiUserPlus className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Register Account</h1>
-            <p className="text-gray-600">Submit a registration request for admin approval</p>
+            <p className="text-gray-600">Create your account. A unique User ID will be generated for you.</p>
           </div>
 
           {/* Role Selection */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">Select Role</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {roles.map((role) => (
                 <button
                   key={role.value}
@@ -300,6 +309,57 @@ const Register = () => {
 
           {/* Registration Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+              <div className="relative">
+                <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+              <div className="relative">
+                <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                  minLength={6}
+                />
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+              <div className="relative">
+                <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                  minLength={6}
+                />
+              </div>
+            </div>
+
+            {/* Role-specific fields */}
             {renderFormFields()}
 
             <button
@@ -312,7 +372,7 @@ const Register = () => {
               ) : (
                 <>
                   <FiUserPlus className="w-5 h-5" />
-                  <span>Submit Registration Request</span>
+                  <span>Register</span>
                 </>
               )}
             </button>
@@ -337,4 +397,3 @@ const Register = () => {
 }
 
 export default Register
-
