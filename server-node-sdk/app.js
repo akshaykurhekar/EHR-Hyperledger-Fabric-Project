@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const connectDB = require('./config/database');
 
 const authRoutes = require('./routes/authRoutes');
 const patientRoutes = require('./routes/patientRoutes');
@@ -9,6 +10,9 @@ const insuranceRoutes = require('./routes/insuranceRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const claimRoutes = require('./routes/claimRoutes');
 const ledgerRoutes = require('./routes/ledgerRoutes');
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 app.use(cors());
