@@ -19,8 +19,9 @@ async function main() {
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
         // Create a new CA client for interacting with the CA.
-        const caURL = ccp.certificateAuthorities['ca.org2.example.com'].url;
-        const ca = new FabricCAServices(caURL);
+        const caInfo = ccp.certificateAuthorities['ca.org2.example.com'];
+        const caTLSCACerts = caInfo.tlsCACerts.pem;
+        const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
         // Create a new file system based wallet for managing identities.
         const walletPath = path.join(process.cwd(), 'wallet');
@@ -68,6 +69,30 @@ async function main() {
         };
         await wallet.put('insuranceCompany01', x509Identity);
         console.log('Successfully registered and enrolled insuranceAdmin user "insuranceCompany01" and imported it into the wallet');
+
+        // -----------------------Onboard Insurance Company on Chaincode------------------ 
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'insuranceCompany01', discovery: { enabled: true, asLocalhost: true } });
+        
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+        
+        // Get the contract from the network.
+        const contract = network.getContract('ehrChainCode');
+
+        const args = {
+            insuranceId: "insuranceCompany01",
+            name: "XYZ Insurance Company",
+            address: "456 Insurance Avenue, City"
+        };
+
+        const res = await contract.submitTransaction('onboardInsuranceCompany', JSON.stringify(args));
+        console.log("\n === Onboard Insurance Company success === \n", res.toString());
+
+        // Disconnect from the gateway.
+        gateway.disconnect();
+
     } catch (error) {
         console.error(`Failed to register user "insuranceCompany01": ${error}`);
         process.exit(1);

@@ -1,0 +1,84 @@
+## Complete API List (39 Total)
+
+### Base URL: `http://localhost:5000`
+
+---
+
+### Authentication APIs (`/auth`) - 6 endpoints
+1. `POST /auth/registerPatient` - Register and onboard patient
+2. `POST /auth/loginPatient` - Patient login
+3. `POST /auth/registerHospitalAdmin` - Register hospital admin
+4. `POST /auth/registerInsuranceAdmin` - Register insurance admin
+5. `POST /auth/registerDoctor` - Register and onboard doctor
+6. `POST /auth/registerInsuranceAgent` - Register and onboard insurance agent
+
+---
+
+### Patient APIs (`/patient`) - 6 endpoints
+7. `POST /patient/claim/submit` - Submit insurance claim
+8. `POST /patient/claim/updateDocuments` - Update claim documents
+9. `POST /patient/grantAccess` - Grant doctor access to records
+10. `POST /patient/revokeAccess` - Revoke doctor access
+11. `GET /patient/:patientId/claims` - Get patient's claims
+12. `GET /patient/:patientId/records` - Get patient's medical records
+13. `GET /patient/:patientId/profile` - Get patient profile
+
+---
+
+### Doctor APIs (`/doctor`) - 5 endpoints
+14. `POST /doctor/addRecord` - Add medical record for patient
+15. `POST /doctor/claim/verify` - Verify claim by doctor
+16. `GET /doctor/records/:patientId` - Get patient records (doctor view)
+17. `GET /doctor/:doctorId/patients` - Get patients assigned to doctor
+18. `GET /doctor/:doctorId/profile` - Get doctor profile
+
+---
+
+### Insurance APIs (`/insurance`) - 6 endpoints
+19. `POST /insurance/claim/review` - Review claim by agent
+20. `POST /insurance/claim/approve` - Approve claim
+21. `POST /insurance/claim/reject` - Reject claim
+22. `GET /insurance/claim/:claimId` - Get claim details
+23. `GET /insurance/claim/:claimId/records` - Get records for a claim
+24. `GET /insurance/agent/:agentId/profile` - Get insurance agent profile
+
+---
+
+### Admin APIs (`/admin`) - 8 endpoints
+25. `POST /admin/hospital/doctor/add` - Add doctor to hospital
+26. `POST /admin/hospital/doctor/assign` - Assign doctor to hospital
+27. `POST /admin/insurance/agent/add` - Add insurance agent
+28. `POST /admin/insurance/agent/assign` - Assign agent to insurance
+29. `GET /admin/hospitals` - List all hospitals
+30. `GET /admin/doctors` - List all doctors
+31. `GET /admin/users` - List all users (patients, doctors, agents)
+32. `DELETE /admin/user/:userId` - Delete user
+
+---
+
+### Claims APIs (`/claims`) - 4 endpoints
+33. `GET /claims/byStatus?status=<status>` - Get claims by status
+34. `GET /claims/byPatient/:patientId` - Get claims by patient
+35. `GET /claims/byDoctor/:doctorId` - Get claims by doctor
+36. `GET /claims/byHospital/:hospitalId` - Get claims by hospital
+
+---
+
+### Ledger APIs (`/ledger`) - 2 endpoints
+37. `POST /ledger/fetch` - Fetch entire ledger
+38. `GET /ledger/history/:assetId` - Get asset history
+
+---
+
+### Root - 1 endpoint
+39. `GET /` - Health check
+
+---
+
+## Authentication
+- Most endpoints require `x-userid` header (except registration endpoints)
+- Example: `x-userid: patient01`
+
+## Total: 39 API endpoints
+
+All endpoints are implemented with corresponding chaincode functions and should work correctly.

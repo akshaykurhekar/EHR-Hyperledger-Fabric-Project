@@ -1,0 +1,1099 @@
+{
+	"info": {
+		"_postman_id": "e6c08e23-70e1-4536-b982-56324b4840e7",
+		"name": "EHR-CARECRYPT-API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40875397"
+	},
+	"item": [
+		{
+			"name": "AUTH",
+			"item": [
+				{
+					"name": "registerPatient",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"adminId\": \"hospitalAdmin\",\r\n  \"doctorId\": \"doctor01\",\r\n  \"userId\": \"patient01\",\r\n  \"name\": \"John Doe\",\r\n  \"dob\": \"01/01/1990\",\r\n  \"city\": \"New York\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/registerPatient",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"registerPatient"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "loginPatient",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"userId\":\"patient01\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/loginPatient",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"loginPatient"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "registerHospitalAdmin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "hospitalAdmin",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "  {\r\n    \"adminId\": \"hospitalAdmin\",\r\n    \"userId\": \"Hospital01\",\r\n    \"hospitalId\": \"Hospital01\",\r\n    \"name\": \"City General Hospital\",\r\n    \"address\": \"123 Main St, City, State\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/registerHospitalAdmin",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"registerHospitalAdmin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "registerInsuranceAdmin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"adminId\": \"insuranceAdmin\",\r\n    \"userId\": \"Insurance01\",\r\n    \"insuranceId\": \"Insurance01\",\r\n    \"name\": \"Health Insurance Co\",\r\n    \"address\": \"456 Insurance Ave, City, State\"\r\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/registerInsuranceAdmin",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"registerInsuranceAdmin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "registerDoctor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "Hospital01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{   \r\n       \"adminId\": \"hospitalAdmin\",\r\n       \"doctorId\": \"doctor01\",\r\n       \"hospitalId\": \"Hospital01\",\r\n       \"name\": \"Dr. Jane Smith\",\r\n       \"city\": \"New York\"\r\n     }\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/registerDoctor",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"registerDoctor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "loginDoctor",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"userId\":\"doctor01\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/loginDoctor",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"loginDoctor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "loginAgent",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"userId\":\"agent01\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/auth/loginInsuranceAgent",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"auth",
+								"loginInsuranceAgent"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PATIENT",
+			"item": [
+				{
+					"name": "patient-claim-submit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"doctorId\": \"doctor01\",\r\n  \"policyId\": \"POL123\",\r\n  \"hospitalId\": \"Hospital01\",\r\n  \"claimAmount\": 5000,\r\n  \"medicalRecordIds\": [\"R-abc123\", \"R-def456\"],\r\n  \"claimType\": \"Surgery\",\r\n  \"description\": \"Emergency surgery performed\",\r\n  \"documents\": [\"doc1.pdf\", \"doc2.pdf\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/patient/claim/submit",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								"claim",
+								"submit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patient-claim-updateDocuments",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							},
+							{
+								"key": "claimId",
+								"value": "CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"adminId\": \"hospitalAdmin\",\r\n  \"doctorId\": \"doctor01\",\r\n  \"claimId\": \"CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211\",\r\n  \"hospitalId\": \"Hospital01\",\r\n  \"name\": \"John Doe\",\r\n  \"city\": \"New York\",\r\n  \"documents\": [\"doc4.pdf\"]\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/patient/claim/updateDocuments",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								"claim",
+								"updateDocuments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patient-grantAccess",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"doctorIdToGrant\": \"doctor01\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/patient/grantAccess",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								"grantAccess"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patient-revokeAccess",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"doctorIdToRevoke\": \"doctor01\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/patient/revokeAccess",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								"revokeAccess"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch-patient-claims",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/patient/:patientId/claims?x-userid=patient01",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								":patientId",
+								"claims"
+							],
+							"query": [
+								{
+									"key": "x-userid",
+									"value": "patient01"
+								}
+							],
+							"variable": [
+								{
+									"key": "patientId",
+									"value": "patient01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patient-profile",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/patient/:patientId/profile",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								":patientId",
+								"profile"
+							],
+							"variable": [
+								{
+									"key": "patientId",
+									"value": "patient01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patient-records",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/patient/:patientId/records",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"patient",
+								":patientId",
+								"records"
+							],
+							"variable": [
+								{
+									"key": "patientId",
+									"value": "patient01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "DOCTOR",
+			"item": [
+				{
+					"name": "doctor-add-record",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "doctor01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"patientId\": \"patient01\",\r\n  \"diagnosis\": \"Fever\",\r\n  \"treatment\": \"Prescribed medication\",\r\n  \"notes\": \"Patient responded well\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/doctor/addRecord",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"doctor",
+								"addRecord"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "doctor-claim-verify",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "doctor01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"claimId\": \"CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211\",\r\n  \"verified\": true,\r\n  \"notes\": \"Claim is valid\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/doctor/claim/verify",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"doctor",
+								"claim",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "doctor-get-patient",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "doctor01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/doctor/records/:patientId",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"doctor",
+								"records",
+								":patientId"
+							],
+							"variable": [
+								{
+									"key": "patientId",
+									"value": "patient01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "doctor-get-patients-assigned",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "doctor01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"adminId\": \"hospitalAdmin\",\r\n  \"doctorId\": \"Doctor-Rama065\",\r\n  \"hospitalId\": \"Hospital01\",\r\n  \"name\": \"Dr. Raj\",\r\n  \"city\": \"Pune\"\r\n}\r\n"
+						},
+						"url": {
+							"raw": "{{baseURL}}/doctor/:doctorId/patients",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"doctor",
+								":doctorId",
+								"patients"
+							],
+							"variable": [
+								{
+									"key": "doctorId",
+									"value": "doctor01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "doctor-profile",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "doctor01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/doctor/:doctorId/profile",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"doctor",
+								":doctorId",
+								"profile"
+							],
+							"variable": [
+								{
+									"key": "doctorId",
+									"value": "doctor01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "INSURANCE",
+			"item": [
+				{
+					"name": "review-claim",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"claimId\": \"CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211\",\r\n  \"reviewNotes\": \"Documents verified\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/insurance/claim/review",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"insurance",
+								"claim",
+								"review"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "approve-claim",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"claimId\": \"CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211\",\r\n  \"approvedAmount\": 4500,\r\n  \"notes\": \"Approved with deduction\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/insurance/claim/approve",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"insurance",
+								"claim",
+								"approve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reject-claim",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"claimId\": \"CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211\",\r\n  \"rejectionReason\": \"Insufficient documentation\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/insurance/claim/reject",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"insurance",
+								"claim",
+								"reject"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "claim-retrieve",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/insurance/claim/:claimId",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"insurance",
+								"claim",
+								":claimId"
+							],
+							"variable": [
+								{
+									"key": "claimId",
+									"value": "CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "claim-related-records",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/insurance/claim/:claimId/records",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"insurance",
+								"claim",
+								":claimId",
+								"records"
+							],
+							"variable": [
+								{
+									"key": "claimId",
+									"value": "CLAIM-752039dbfba4a515c8736e2d8deb84f14315c9d6a4a0c3163200020d7f7ea211"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "insurance-agent-profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/insurance/agent/:agentId/profile",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"insurance",
+								"agent",
+								":agentId",
+								"profile"
+							],
+							"variable": [
+								{
+									"key": "agentId",
+									"value": "agent01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CLAIM",
+			"item": [
+				{
+					"name": "claim-status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "agent01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/claims/byStatus?status=pending",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"claims",
+								"byStatus"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "claim-patient",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "patient01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/claims/byPatient/:patientId",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"claims",
+								"byPatient",
+								":patientId"
+							],
+							"variable": [
+								{
+									"key": "patientId",
+									"value": "patient01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "claim-doctor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "doctor01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/claims/byDoctor/:doctorId",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"claims",
+								"byDoctor",
+								":doctorId"
+							],
+							"variable": [
+								{
+									"key": "doctorId",
+									"value": "doctor01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "claimHospital",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "Hospital01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/claims/byHospital/:hospitalId",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"claims",
+								"byHospital",
+								":hospitalId"
+							],
+							"variable": [
+								{
+									"key": "hospitalId",
+									"value": "Hospital01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "LEDGER",
+			"item": [
+				{
+					"name": "fetch-ledger",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-userid",
+								"value": "Hospital01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/ledger/fetch",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"ledger",
+								"fetch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patient_data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-userid",
+								"value": "Hospital01",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/ledger/history/:assetId",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"ledger",
+								"history",
+								":assetId"
+							],
+							"variable": [
+								{
+									"key": "assetId",
+									"value": "patient01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "New Request",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userId\" : \"anuj\",\r\n    \"patientId\" : \"anuj\",\r\n    \"recordId\" : \"R-100417bebac78fb1e12f03e53c825f33918e36c27ac41970e0cdcab30942aac6\"\r\n}"
+				},
+				"url": {
+					"raw": "{{baseURL}}",
+					"host": [
+						"{{baseURL}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
